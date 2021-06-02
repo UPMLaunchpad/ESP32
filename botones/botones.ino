@@ -3,9 +3,9 @@
 #include "FastLED.h"
 #define NUM_LEDS 100
 CRGB leds[NUM_LEDS];
-int OA0 =25; 
-int OA1 = 26;
-int OA2 = 27;
+int OA0 =4; 
+int OA1 = 0;
+int OA2 = 2;
 int GS = 34;
 int IA0 = 35; 
 int IA1 = 32;
@@ -31,44 +31,63 @@ void setup() {
  // pinMode(out, OUTPUT);
 Serial.begin(115200);
    delay(1000);
+  
    
 }
 
 void loop() {
-  
+  delay(1000);
 switch(row){
-  case 0:
+  case 0:{
+     Serial.printf(" opcion: %d ",row); 
   digitalWrite(OA0, LOW);
   digitalWrite(OA1, LOW);
   digitalWrite(OA2, LOW);
-  case 1:
+    break;
+ }
+  case 1:{
   digitalWrite(OA0, HIGH);
   digitalWrite(OA1, LOW);
   digitalWrite(OA2, LOW);
-  case 2:
+  Serial.printf(" opcion: %d ",row);
+    break;}
+  case 2:{
   digitalWrite(OA0, LOW);
   digitalWrite(OA1, HIGH);
   digitalWrite(OA2, LOW);
-  case 3:
+  Serial.printf(" opcion: %d ",row);
+    break;}
+  case 3:{
   digitalWrite(OA0, HIGH);
   digitalWrite(OA1, HIGH);
   digitalWrite(OA2, LOW);
-  case 4:
+  Serial.printf(" opcion: %d ",row);
+    break;}
+  case 4:{
   digitalWrite(OA0, LOW);
   digitalWrite(OA1, LOW);
   digitalWrite(OA2, HIGH);
-  case 5:
+  Serial.printf(" opcion: %d ",row);
+    break;}
+  case 5:{
   digitalWrite(OA0, HIGH);
   digitalWrite(OA1, LOW);
   digitalWrite(OA2, HIGH);
-  case 6:
+  Serial.printf(" opcion: %d ",row);
+    break;}
+  case 6:{
   digitalWrite(OA0, LOW);
   digitalWrite(OA1, HIGH);
   digitalWrite(OA2, HIGH);
-  case 7:
+  Serial.printf(" opcion: %d ",row);
+    break;}
+  case 7:{
   digitalWrite(OA0, HIGH);
   digitalWrite(OA1, HIGH);
   digitalWrite(OA2, HIGH);
+  Serial.printf(" opcion: %d ",row);
+    break;
+  }
   default:
   break;
   
@@ -83,23 +102,23 @@ switch(row){
  bottom = (row*8)+col;
    leds[bottom] = CRGB::Blue; FastLED.show();
  
-}
+}}
 row++;
   if(row==8){
     row=0;
   }
 
-   }
+   
 /*
 Serial.printf(" pin 34: %d ",digitalRead(GS));
 Serial.printf(" pin 35: %d ",digitalRead(IA0));
 Serial.printf(" pin 32: %d ",digitalRead(IA1));
 Serial.printf(" pin 33: %d ",digitalRead(IA2));
 */
-//delay(1000);
+
     
 
-
+Serial.printf(" fila: %d ",row);
  
 
 

@@ -12,7 +12,7 @@
 #define I2S_LRC       26
 
 Audio audio;
-int GS = 34;
+int GS = 35;
 
 void setup(){
     pinMode(SD_CS, OUTPUT);
@@ -21,22 +21,22 @@ void setup(){
     Serial.begin(115200);
     SD.begin(SD_CS);
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio.setVolume(15); // 0...21
-  //  audio.connecttoFS(SD, "/prueba/prueba.wav");
- audio.connecttoFS(SD, "/prueba/videoplayback.wav");
+    audio.setVolume(10); // 0...21
+    audio.connecttoFS(SD, "/prueba/prueba.wav");
+ //audio.connecttoFS(SD, "/sonidos/prueba/arranque.wav");
 //play();
     pinMode(GS, INPUT);
 }
 
 void loop(){
   audio.loop();
-
-  if(digitalRead(GS)==1){
-    audio.stopSong();
- play2();
+  
+if(digitalRead(GS)==0){
+ audio.stopSong();
+play2();
   
    
-   }
+ }
 
 
 //delay(10000);
