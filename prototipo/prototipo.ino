@@ -1,11 +1,18 @@
 
 
-
+#include "BluetoothSerial.h"
 #include "Audio.h"
 #include "SD.h"
 #include "FS.h"
 #include "FastLED.h"
 // Digital I/O used
+#define GS            35
+#define IA1           36 
+#define IA2           39
+#define IA0           34
+#define OA0           22 
+#define OA1           13
+#define OA2           12
 #define SD_CS          5
 #define SPI_MOSI      23
 #define SPI_MISO      19
@@ -13,21 +20,36 @@
 #define I2S_DOUT      25
 #define I2S_BCLK      27
 #define I2S_LRC       26
-#define NUM_LEDS 100
+#define NUM_LEDS 64
+int conf[6];
+float confLeds[NUM_LEDS];
 CRGB leds[NUM_LEDS];
 
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
 
+BluetoothSerial SerialBT;
 Audio audio;
-int GS = 35;
+/*int GS = 35;
+int IA0 =36; 
+int IA1 = 39;
+int IA2 = 34;
+int OA0 = 22; 
+int OA1 = 13;
+int OA2 = 12;*/
 int row= 0;
 int col =0;
 int bottom=0; 
-int OA0 =36; 
-int OA1 = 39;
-int OA2 = 34;
-int IA0 = 22; 
-int IA1 = 1;
-int IA2 = 3;
+
+void probarLeds(){
+   leds[0] = CRGB::Blue; FastLED.show();
+   leds[1] = CRGB::Red; FastLED.show();
+    leds[2] = CRGB::Blue; FastLED.show();
+   leds[3] = CRGB::Red; FastLED.show();
+   delay(1000);
+
+}
 
 void apagarLeds(){
   
@@ -37,111 +59,181 @@ void apagarLeds(){
 }
 
 void searchButtom(){
-   Serial.println("*********HOLA***********");
+  // Serial.println("Buscando boton");
   switch(row){
-    case 0:{
-     Serial.printf(" opcion: %d ",row); 
+    case 0:
+    // Serial.printf(" opcion: %d ",row); 
   digitalWrite(OA0, LOW);
   digitalWrite(OA1, LOW);
   digitalWrite(OA2, LOW);
     break;
- }
-  case 1:{
+
+  case 1:
+  
   digitalWrite(OA0, HIGH);
   digitalWrite(OA1, LOW);
   digitalWrite(OA2, LOW);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 2:{
-  digitalWrite(OA0, LOW);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, LOW);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 3:{
-  digitalWrite(OA0, HIGH);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, LOW);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 4:{
-  digitalWrite(OA0, LOW);
-  digitalWrite(OA1, LOW);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 5:{
-  digitalWrite(OA0, HIGH);
-  digitalWrite(OA1, LOW);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 6:{
-  digitalWrite(OA0, LOW);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 7:{
-  digitalWrite(OA0, HIGH);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
+ // Serial.printf(" opcion: %d ",row);
     break;
-  }
+  case 2:
+ digitalWrite(OA0, LOW);
+  digitalWrite(OA1, HIGH);
+  digitalWrite(OA2, LOW);
+//  Serial.printf(" opcion: %d ",row);
+    break;
+  case 3:
+ digitalWrite(OA0, HIGH);
+  digitalWrite(OA1, HIGH);
+  digitalWrite(OA2, LOW);
+ // Serial.printf(" opcion: %d ",row);
+    break;
+  case 4:
+  digitalWrite(OA0, LOW);
+  digitalWrite(OA1, LOW);
+  digitalWrite(OA2, HIGH);
+//  Serial.printf(" opcion: %d ",row);
+    break;
+  case 5:
+  digitalWrite(OA0, HIGH);
+  digitalWrite(OA1, LOW);
+  digitalWrite(OA2, HIGH);
+ // Serial.printf(" opcion: %d ",row);
+    break;
+  case 6:
+  digitalWrite(OA0, LOW);
+  digitalWrite(OA1, HIGH);
+  digitalWrite(OA2, HIGH);
+ // Serial.printf(" opcion: %d ",row);
+    break;
+  case 7:
+  digitalWrite(OA0, HIGH);
+  digitalWrite(OA1, HIGH);
+  digitalWrite(OA2, HIGH);
+ // Serial.printf(" opcion: %d ",row);
+    break;
+  default:
+    Serial.printf("Error");
+    break;
 }}
+
+boolean bluetooth(){
+  boolean cargado = false;
+  if (SerialBT.available()) {
+  
+  File conf = SD.open("/configuraciones/configuracion",FILE_WRITE);
+  char byte = SerialBT.read();
+  while(byte != '-'){
+conf.write(byte);
+    byte = SerialBT.read();
+  }
+  conf.close();
+  cargado = true;
+}
+return cargado;
+}
+
+void cargarConfg(String path){
+  File conf = SD.open(path);
+  int numCon =0;
+  int numLed =0; 
+  if (conf)
+  {
+   string dataLine;
+   while (dataFile.available()){
+   if(numCon<6){
+     
+      conf[numCon] = dataFile.read(); 
+      numCon++;
+      
+    }
+   else{
+     confLed[numLed] = dataFile.read(); 
+     numLed++;
+      
+   }
+   
+     
+    }
+    dataFile.close();
+  }
+  else 
+  {
+    Serial.println(F("Error al abrir el archivo"));
+  }
+
+
+  
+}
+
+void iniciarConf(){
+  //rellenar con metodos de configuracion
+}
+
+
 void setup(){
+  SerialBT.begin("UPMLaunchpad");
    FastLED.addLeds<NEOPIXEL, 17>(leds, NUM_LEDS);
   pinMode(GS, INPUT);
-      pinMode(OA0, OUTPUT);
+  pinMode(OA0, OUTPUT);
   pinMode(OA1, OUTPUT);
   pinMode(OA2, OUTPUT);
-   pinMode(IA0,INPUT);
-   pinMode(IA1,INPUT);
-    pinMode(IA2,INPUT);
-    apagarLeds();
+  pinMode(IA0,INPUT);
+  pinMode(IA1,INPUT);
+  pinMode(IA2,INPUT);
+  digitalWrite(OA0, LOW);
+  digitalWrite(OA1, LOW);
+  digitalWrite(OA2, LOW);
+  apagarLeds();
+  if(SD.exists("/configuraciones/configuracion")){
+    SD.remove("/configuraciones/configuracion");
+  }
+  
  
     pinMode(SD_CS, OUTPUT);
     digitalWrite(SD_CS, HIGH);
     SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
     Serial.begin(115200);
- delay(1500);
+    delay(1500);
     
     SD.begin(SD_CS);
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio.setVolume(15); // 0...21
- audio.connecttoFS(SD, "/sonidos/prueba/arranque.wav");
-// audio.connecttoFS(SD, "/prueba/videoplayback.wav");
-//play();
-    
-   // delay(1000);
+    audio.setVolume(10); // 0...21
+ audio.connecttoFS(SD, "/sonidos/arranque.wav");
+cargarConfg("/configuraciones/confgPredeterminada");
+iniciarConf();
 }
 
 
 void loop(){
-  searchButtom();
-  audio.loop();
+  
  
- if( digitalRead(GS)==0){
-    col= digitalRead(IA0)+(2*digitalRead(IA1))+(4*digitalRead(IA2));
-//col=1;
- bottom = (row*8)+col;
-   leds[bottom] = CRGB::Blue; FastLED.show();
-   audio.stopSong();
-   play2();
-    // delay(100);//delay solo dentro de funciones que no afecten al loop
-     leds[bottom+1] = CRGB::Red; FastLED.show();
-//leds[bottom] = CRGB::Black; FastLED.show();
+  
+  if(bluetooth()){
+    cargarConfg("/configuraciones/configuracion");
+    iniciarConf();
+  }
+  searchButtom();
 
+  audio.loop();
+
+  
+ 
+ if( digitalRead(GS)==LOW){
+  Serial.printf("pulsado");
+    col= digitalRead(IA0)+(2*digitalRead(IA1))+(4*digitalRead(IA2));
+
+ bottom = (row*8)+col;
+ Serial.printf("%d",bottom);
+   leds[bottom] = CRGB::White; FastLED.show();
+   audio.stopSong();
+   play();
+//   probarLeds();
+    // delay(100);//delay solo dentro de funciones que no afecten al loop
+   //  leds[bottom+1] = CRGB::Red; FastLED.show();
  apagarLeds();
 }
   
-  //if(digitalRead(GS)==0){
-    //audio.stopSong();
-    //play2();
-  
-   
- //}
+//probarLeds();
 
 
 row++;
@@ -152,18 +244,15 @@ row++;
  
 }
 
-void play2(){
+void play(){
    
- //  audio.connecttoFS(SD, "/prueba/videoplayback.wav");
-//   music_info.name = filename.substring(1, filename.indexOf("."));
-if(bottom>30){
+ 
+/*if(bottom>30){
 audio.connecttoFS(SD, "sonidos/prueba/sonido5.wav");
 } else {
   audio.connecttoFS(SD, "sonidos/prueba/sonido10.wav");
-  }
-    
-    
-   // audio.connecttoFS(SD, "/prueba/videoplayback.wav");
+  }*/
+     audio.connecttoFS(SD, "/sonidos/test/sonido1.wav");
   //  music_info.runtime = audio.getAudioCurrentTime();
     //music_info.length = audio.getAudioFileDuration();
    // music_info.volume = audio.getVolume();
