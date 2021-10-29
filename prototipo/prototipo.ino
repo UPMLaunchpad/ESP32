@@ -22,7 +22,7 @@
 #define I2S_LRC       26
 #define NUM_LEDS 64
 int conf[6];
-float confLeds[NUM_LEDS];
+float confLed[NUM_LEDS];
 CRGB leds[NUM_LEDS];
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
@@ -121,11 +121,15 @@ boolean bluetooth(){
   if (SerialBT.available()) {
   
   File conf = SD.open("/configuraciones/configuracion",FILE_WRITE);
-  char byte = SerialBT.read();
+  char bte = SerialBT.read();
   while(byte != '-'){
-conf.write(byte);
-    byte = SerialBT.read();
+conf.write(bte);
+    bte = SerialBT.read();
+    
   }
+
+
+  
   conf.close();
   cargado = true;
 }
@@ -133,28 +137,28 @@ return cargado;
 }
 
 void cargarConfg(String path){
-  File conf = SD.open(path);
+  File confg = SD.open(path);
   int numCon =0;
   int numLed =0; 
   if (conf)
   {
-   string dataLine;
-   while (dataFile.available()){
+   
+   while (confg.available()){
    if(numCon<6){
      
-      conf[numCon] = dataFile.read(); 
+      conf[numCon] = confg.read(); 
       numCon++;
       
     }
    else{
-     confLed[numLed] = dataFile.read(); 
+     confLed[numLed] = confg.read(); 
      numLed++;
       
    }
    
      
     }
-    dataFile.close();
+    confg.close();
   }
   else 
   {
@@ -199,7 +203,7 @@ void setup(){
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
     audio.setVolume(10); // 0...21
  audio.connecttoFS(SD, "/sonidos/arranque.wav");
-cargarConfg("/configuraciones/confgPredeterminada");
+//cargarConfg("/configuraciones/confgPredeterminada");
 iniciarConf();
 }
 
@@ -209,14 +213,14 @@ void loop(){
  
   
   if(bluetooth()){
-    cargarConfg("/configuraciones/configuracion");
+   // cargarConfg("/configuraciones/configuracion");
     iniciarConf();
   }
   searchButtom();
 
   audio.loop();
 
-  
+  /*
  
  if( digitalRead(GS)==LOW){
   Serial.printf("pulsado");
@@ -231,7 +235,7 @@ void loop(){
     // delay(100);//delay solo dentro de funciones que no afecten al loop
    //  leds[bottom+1] = CRGB::Red; FastLED.show();
  apagarLeds();
-}
+}*/
   
 //probarLeds();
 
