@@ -5,6 +5,7 @@
 #include "SD.h"
 #include "FS.h"
 #include "FastLED.h"
+#include "math.h"
 // Digital I/O used
 #define GS            35
 #define IA1           36 
@@ -20,9 +21,9 @@
 #define I2S_DOUT      25
 #define I2S_BCLK      27
 #define I2S_LRC       26
-#define NUM_LEDS 64
-int conf[6];
-float confLed[NUM_LEDS];
+#define NUM_LEDS 65
+int confLed[NUM_LEDS][20];
+int  launchpad[8][8] = {{0,1,2,3,4,5,6,7},{15,14,13,12,11,10,9,8},{16,17,18,19,20,21,22,23},{31,30,29,28,27,26,25,24},{32,33,34,35,36,37,38,39},{47,46,45,44,43,42,41,40},{48,49,50,51,52,53,54,55},{63,62,61,60,59,58,57,56}};
 CRGB leds[NUM_LEDS];
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
@@ -31,30 +32,23 @@ CRGB leds[NUM_LEDS];
 
 BluetoothSerial SerialBT;
 Audio audio;
-/*int GS = 35;
-int IA0 =36; 
-int IA1 = 39;
-int IA2 = 34;
-int OA0 = 22; 
-int OA1 = 13;
-int OA2 = 12;*/
 int row= 0;
 int col =0;
 int bottom=0; 
 
-void probarLeds(){
-   leds[0] = CRGB::Blue; FastLED.show();
-   leds[1] = CRGB::Red; FastLED.show();
-    leds[2] = CRGB::Blue; FastLED.show();
-   leds[3] = CRGB::Red; FastLED.show();
-   delay(1000);
-
-}
 
 void apagarLeds(){
   
   for(int x=0;x<NUM_LEDS;x++){
     leds[x] = CRGB::Black; FastLED.show();
+  }
+}
+
+void inicializarConfig(){
+  int x,y;
+  for(x=0;x<NUM_LEDS;x++){
+    for(y=0;y<20;y++)
+    confLed[x][y]=0;
   }
 }
 
@@ -118,17 +112,21 @@ void searchButtom(){
 
 boolean bluetooth(){
   boolean cargado = false;
+ 
+  char bte;
   if (SerialBT.available()) {
   
   File conf = SD.open("/configuraciones/configuracion",FILE_WRITE);
-  char bte = SerialBT.read();
-  while(byte != '-'){
-conf.write(bte);
+  bte = SerialBT.read();
+ while(bte != '-'){
+    conf.write(bte);
     bte = SerialBT.read();
-    
+    if(bte==';'){
+      conf.write('\n');
+      bte = SerialBT.read();
+    }
+     
   }
-
-
   
   conf.close();
   cargado = true;
@@ -138,40 +136,135 @@ return cargado;
 
 void cargarConfg(String path){
   File confg = SD.open(path);
-  int numCon =0;
-  int numLed =0; 
-  if (conf)
-  {
+   
+ 
+  int led;
+  int cnf;
+  char bte;
+ 
    
    while (confg.available()){
-   if(numCon<6){
-     
-      conf[numCon] = confg.read(); 
-      numCon++;
-      
-    }
-   else{
-     confLed[numLed] = confg.read(); 
-     numLed++;
-      
-   }
+  
+ 
+  for(led=0;led<NUM_LEDS;led++){
+  for(cnf=0;cnf<20;cnf++){
+    bte = confg.read(); 
    
-     
+  while(bte!=','){
+    
+    confLed[led][cnf]= (confLed[led][cnf]*(10))+(bte - '0');
+    bte = confg.read(); 
+    if (bte ==';'){
+    bte=',';
+    cnf=20;
+    }
+   
+   
+  }
     }
     confg.close();
   }
-  else 
-  {
-    Serial.println(F("Error al abrir el archivo"));
-  }
-
+  
+  
+   }
 
   
 }
 
-void iniciarConf(){
-  //rellenar con metodos de configuracion
+
+
+
+void efectoCuadrado(int fila, int columna){
+  int x,y;
+  for (x=fila-1;x<fila+2;x++){
+    for(y=columna-1;y<columna+2;y++){
+      if (x<0||x>7||y<0||y>7){
+        encenderLed(64,confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+      }else{
+         encenderLed(launchpad[x][y],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+      }
+    }
+  }
+ 
+ 
+  
 }
+
+
+
+ void efectoCruz(int fila, int columna){
+  int x;
+  for(x=0;x<7;x++){
+     encenderLed(launchpad[x][columna],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+     encenderLed(launchpad[fila][x],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+  }
+ 
+  
+}
+  
+
+
+ void efectoCruzProgresivo(int fila, int columna){
+int i,turnos;
+encenderLed(confLed[(fila*8)+columna][0],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+
+
+turnos=max(max(7-fila,7-columna),max(fila,columna));
+
+for(i=0;i<turnos;i++){
+    if(columna-i<0){
+       encenderLed(64,confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    }else{
+       encenderLed(launchpad[fila][columna-i],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    }
+      if(columna+i>7){
+       encenderLed(64,confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    }else{
+       encenderLed(launchpad[fila][columna+i],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    }
+    if(fila-i<0){
+       encenderLed(64,confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    }else{
+        encenderLed(launchpad[fila-i][columna],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    }
+      if(fila+i>7){
+       encenderLed(64,confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    }else{
+       encenderLed(launchpad[fila+i][columna],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+    } 
+delay(500);       
+      
+      
+}
+  
+  
+}
+
+ void encenderLed(int boton,int HSL1,int HSL2,int HSL3){
+
+    leds[boton] = CHSV(HSL1,HSL2,HSL3); FastLED.show();
+}
+ void configurarEfecto(int fila, int columna){
+
+ switch(confLed[(fila*8)+columna][2]){
+  case 1:
+        efectoCuadrado(fila,columna);
+        break;
+  case 2:
+        efectoCruz(fila,columna);
+        break;
+  case 3:
+        efectoCruzProgresivo(fila,columna);
+        break;
+  default:
+       encenderLed(confLed[(fila*8)+columna][0],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
+        break;
+ 
+  
+ }
+  
+}
+  
 
 
 void setup(){
@@ -188,9 +281,7 @@ void setup(){
   digitalWrite(OA1, LOW);
   digitalWrite(OA2, LOW);
   apagarLeds();
-  if(SD.exists("/configuraciones/configuracion")){
-    SD.remove("/configuraciones/configuracion");
-  }
+ inicializarConfig();
   
  
     pinMode(SD_CS, OUTPUT);
@@ -200,44 +291,52 @@ void setup(){
     delay(1500);
     
     SD.begin(SD_CS);
+
+
+     if(SD.exists("/configuraciones/configuracion")){
+    SD.remove("/configuraciones/configuracion");
+  }
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
     audio.setVolume(10); // 0...21
  audio.connecttoFS(SD, "/sonidos/arranque.wav");
-//cargarConfg("/configuraciones/confgPredeterminada");
-iniciarConf();
+cargarConfg("/configuraciones/confgPredeterminada");
+
 }
+
+
 
 
 void loop(){
   
- 
+
   
   if(bluetooth()){
-   // cargarConfg("/configuraciones/configuracion");
-    iniciarConf();
+    cargarConfg("/configuraciones/configuracion");
   }
   searchButtom();
 
   audio.loop();
 
-  /*
+  
  
  if( digitalRead(GS)==LOW){
-  Serial.printf("pulsado");
+ // Serial.printf("pulsado");
     col= digitalRead(IA0)+(2*digitalRead(IA1))+(4*digitalRead(IA2));
 
- bottom = (row*8)+col;
- Serial.printf("%d",bottom);
-   leds[bottom] = CRGB::White; FastLED.show();
+// bottom = (row*8)+col;
+ 
+ //Serial.printf("%d",bottom);
+configurarEfecto(row,col);
    audio.stopSong();
-   play();
+   play(confLed[(row*8)+col][3]);
+   
 //   probarLeds();
     // delay(100);//delay solo dentro de funciones que no afecten al loop
    //  leds[bottom+1] = CRGB::Red; FastLED.show();
  apagarLeds();
-}*/
+}
   
-//probarLeds();
+
 
 
 row++;
@@ -248,20 +347,45 @@ row++;
  
 }
 
-void play(){
+void play(int sonido){
    
- 
-/*if(bottom>30){
-audio.connecttoFS(SD, "sonidos/prueba/sonido5.wav");
-} else {
-  audio.connecttoFS(SD, "sonidos/prueba/sonido10.wav");
-  }*/
-     audio.connecttoFS(SD, "/sonidos/test/sonido1.wav");
+ switch(sonido){
+  case 0:
+    audio.connecttoFS(SD, "/sonidos/test/sonido0.wav");
   //  music_info.runtime = audio.getAudioCurrentTime();
     //music_info.length = audio.getAudioFileDuration();
    // music_info.volume = audio.getVolume();
     //music_info.status = 1;
     Serial.println("**********start a new sound************");
+    break;
+  case 1:
+    audio.connecttoFS(SD, "/sonidos/test/sonido1.wav");
+  //  music_info.runtime = audio.getAudioCurrentTime();
+    //music_info.length = audio.getAudioFileDuration();
+   // music_info.volume = audio.getVolume();
+    //music_info.status = 1;
+    Serial.println("**********start a new sound************");
+    break;
+  case 2:
+    audio.connecttoFS(SD, "/sonidos/test/sonido2.wav");
+  //  music_info.runtime = audio.getAudioCurrentTime();
+    //music_info.length = audio.getAudioFileDuration();
+   // music_info.volume = audio.getVolume();
+    //music_info.status = 1;
+    Serial.println("**********start a new sound************");  
+    break;
+  default:
+    break;
+
+
+  
+ }
+
+
+
+ 
+
+     
     
 }
 
@@ -300,242 +424,3 @@ void audio_lasthost(const char *info){  //stream URL played
 void audio_eof_speech(const char *info){
     Serial.print("eof_speech  ");Serial.println(info);
 }
-
-
-
-
-/*
-
-
-
-
-
-
-
-#include "Audio.h"
-#include "SD.h"
-#include "FS.h"
-#include "FastLED.h"
-// Digital I/O used
-#define SD_CS          5
-#define SPI_MOSI      23
-#define SPI_MISO      19
-#define SPI_SCK       18
-#define I2S_DOUT      25
-#define I2S_BCLK      27
-#define I2S_LRC       26
-#define NUM_LEDS      100
-
-Audio audio;
-CRGB leds[NUM_LEDS];
-
-int OA0 =36; 
-int OA1 = 39;
-int OA2 = 34;
-int GS = 35;
-int IA0 = 22; 
-int IA1 = 1;
-int IA2 = 3;
-
-int LED =17;
-
-
-int row= 0;
-int col =0;
-int bottom=0; 
-
-
-
-void setup() {
-
-  //Serial.println("HOLA***********");
-  FastLED.addLeds<NEOPIXEL, 17>(leds, NUM_LEDS);
-  // put your setup code here, to run once:
-  pinMode(OA0, OUTPUT);
-  pinMode(OA1, OUTPUT);
-  pinMode(OA2, OUTPUT);
-  pinMode(GS, INPUT);
-  pinMode(IA0,INPUT);
-   pinMode(IA1,INPUT);
-    pinMode(IA2,INPUT);
- pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
-    //Serial.println("HOLA***********");
-    SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
-    Serial.begin(115200);
-    SD.begin(SD_CS);
-    audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    //Serial.println("*********HOLA***********");
-    audio.setVolume(15); // 0...21
- audio.connecttoFS(SD, "/sonidos/prueba/arranque.wav");
- //audio.connecttoFS(SD, "/prueba/videoplayback.wav");
- 
-   Serial.begin(115200);
-   delay(1000);
- //Serial.println("*********HOLA***********");
-//play();
-
-
-}
-
-void otraCancion(int num){
-audio.stopSong();
-  switch (num){
-        case 0:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido0.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 1:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido1.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 2:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido2.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 3:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido3.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 4:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido4.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 5:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido5.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 6:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido6.wav");
-              Serial.println("**********start a new sound************");  
-              break;
-        case 7:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido7.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 8:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido8.wav");
-              Serial.println("**********start a new sound************");  
-              break;
-        case 9:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido9.wav");
-              Serial.println("**********start a new sound************"); 
-              break;
-        case 10:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido10.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 11:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido11.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 12:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido12.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 13:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido13.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 14:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido14.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        case 15:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido15.wav");
-              Serial.println("**********start a new sound************");
-                break;
-         case 16:
-              audio.connecttoFS(SD, "sonidos/prueba/sonido16.wav");
-              Serial.println("**********start a new sound************");
-                break;
-        default:
-              Serial.println("*********ERROR***********");
-                break;
-  }
-        
-    
-}
-void searchButtom(){
-   Serial.println("*********HOLA***********");
-  switch(row){
-    case 0:{
-     Serial.printf(" opcion: %d ",row); 
-  digitalWrite(OA0, LOW);
-  digitalWrite(OA1, LOW);
-  digitalWrite(OA2, LOW);
-    break;
- }
-  case 1:{
-  digitalWrite(OA0, HIGH);
-  digitalWrite(OA1, LOW);
-  digitalWrite(OA2, LOW);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 2:{
-  digitalWrite(OA0, LOW);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, LOW);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 3:{
-  digitalWrite(OA0, HIGH);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, LOW);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 4:{
-  digitalWrite(OA0, LOW);
-  digitalWrite(OA1, LOW);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 5:{
-  digitalWrite(OA0, HIGH);
-  digitalWrite(OA1, LOW);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 6:{
-  digitalWrite(OA0, LOW);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
-    break;}
-  case 7:{
-  digitalWrite(OA0, HIGH);
-  digitalWrite(OA1, HIGH);
-  digitalWrite(OA2, HIGH);
-  Serial.printf(" opcion: %d ",row);
-    break;
-  }
-}
-
-
-   if(digitalRead(GS)==1){
-    leds[bottom] = CRGB::Black; FastLED.show();}
- if( digitalRead(GS)==0){
-    col= digitalRead(IA0)+(2*digitalRead(IA1))+(4*digitalRead(IA2));
- bottom = (row*8)+col;
-   leds[bottom] = CRGB::Blue; FastLED.show();
-   otraCancion(bottom);
- 
-}
-row++;
-  if(row==8){
-    row=0;
-  }
-  delay(1000);
-  }
-
-void loop() {
-  Serial.println("*********HOLA***********");
-   //audio.loop();
- Serial.println("*********HOLA***********");
-  //  searchButtom();
-   
-
-
-}
-
-*/
