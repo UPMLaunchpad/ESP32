@@ -34,7 +34,7 @@ BluetoothSerial SerialBT;
 Audio audio;
 int row= 0;
 int col =0;
-int bottom=0; 
+ 
 void apagarLeds(){
   for(int x=0;x<NUM_LEDS;x++){
     leds[x] = CRGB::Black; FastLED.show();
@@ -107,6 +107,7 @@ boolean bluetooth(){
       conf.write(bte);
       bte = SerialBT.read();
         if(bte==';'){
+          conf.write(bte);
           conf.write('\n');
           bte = SerialBT.read();
     }
