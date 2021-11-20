@@ -247,7 +247,7 @@ void setup(){
    audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
    audio.setVolume(10); // 0...21
    audio.connecttoFS(SD, "/sonidos/arranque.wav");
-   cargarConfg("/configuraciones/configuracion");
+   cargarConfg("/configuraciones/configuracion.txt");
   
 
 }
@@ -257,7 +257,7 @@ void setup(){
 
 void loop(){  
   if(bluetooth()){
-    cargarConfg("/configuraciones/configuracion");
+    cargarConfg("/configuraciones/configuracion.txt");
     }
   searchButtom();
   audio.loop();
