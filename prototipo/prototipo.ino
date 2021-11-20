@@ -162,7 +162,7 @@ void efectoCuadrado(int fila, int columna){
 
 void efectoCruz(int fila, int columna){
   int x;
-  for(x=0;x<7;x++){
+  for(x=0;x<8;x++){
      encenderLed(launchpad[x][columna],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
      encenderLed(launchpad[fila][x],confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
   } 
@@ -175,7 +175,7 @@ void efectoCruzProgresivo(int fila, int columna){
 
   turnos=max(max(7-fila,7-columna),max(fila,columna));
 
-  for(i=0;i<turnos;i++){
+  for(i=0;i<turnos+1;i++){
     if(columna-i<0){
        encenderLed(64,confLed[(fila*8)+columna][3],confLed[(fila*8)+columna][4],confLed[(fila*8)+columna][5]);
     }else{
