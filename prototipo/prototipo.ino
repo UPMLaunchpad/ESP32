@@ -49,7 +49,7 @@ void inicializarConfig(){
   }
 }
 
-void searchButtom(){
+void searchButton(){
  switch(row){
     case 0:
   digitalWrite(OA0, LOW);
@@ -259,7 +259,7 @@ void loop(){
   if(bluetooth()){
     cargarConfg("/configuraciones/configuracion.txt");
     }
-  searchButtom();
+  searchButton();
   audio.loop();
  if(digitalRead(GS)==LOW){
     col= digitalRead(IA0)+(2*digitalRead(IA1))+(4*digitalRead(IA2));
