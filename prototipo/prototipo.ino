@@ -101,7 +101,7 @@ boolean bluetooth(){
   boolean cargado = false;
   char bte;
   if (SerialBT.available()) {
-  File conf = SD.open("/configuraciones/configuracion",FILE_WRITE);
+  File conf = SD.open("/configuraciones/configuracion.txt",FILE_WRITE);
   bte = SerialBT.read();
     while(bte != '-'){
       conf.write(bte);
@@ -277,7 +277,7 @@ void loop(){
 void play(int sonido){
  switch(sonido){
   case 0:
-    audio.connecttoFS(SD, "/sonidos/test/sonido0.wav");
+    audio.connecttoFS(SD, "/sonidos/sonido0.wav");
   //  music_info.runtime = audio.getAudioCurrentTime();
     //music_info.length = audio.getAudioFileDuration();
    // music_info.volume = audio.getVolume();
@@ -285,7 +285,7 @@ void play(int sonido){
     Serial.println("**********start a new sound************");
     break;
   case 1:
-    audio.connecttoFS(SD, "/sonidos/test/sonido1.wav");
+    audio.connecttoFS(SD, "/sonidos/sonido1.wav");
   //  music_info.runtime = audio.getAudioCurrentTime();
     //music_info.length = audio.getAudioFileDuration();
    // music_info.volume = audio.getVolume();
@@ -293,7 +293,7 @@ void play(int sonido){
     Serial.println("**********start a new sound************");
     break;
   case 2:
-    audio.connecttoFS(SD, "/sonidos/test/sonido2.wav");
+    audio.connecttoFS(SD, "/sonidos/sonido2.wav");
   //  music_info.runtime = audio.getAudioCurrentTime();
     //music_info.length = audio.getAudioFileDuration();
    // music_info.volume = audio.getVolume();
